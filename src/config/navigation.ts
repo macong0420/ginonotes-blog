@@ -58,15 +58,12 @@ export const navigation: NavigationConfig = {
     },
   ],
   projects: [
-    { href: 'https://bestblogs.dev', label: 'BestBlogs.dev', icon: FaCode },
-    { href: 'https://bitflowing.net', label: 'BitFlowing', icon: FaBrain },
-    { href: 'https://hiagent.io', label: 'HiAgent', icon: FaRobot },
-    { href: 'https://tiky.ai', label: 'Tiky AI', icon: FaLightbulb },
+    { href: 'https://shuiyin.yc0501.online/', label: '图片水印', icon: FaCode },
   ],
   online: [
-    { href: 'https://github.com/ginobefun', label: 'GitHub', icon: FaGithub },
+    { href: 'https://github.com/macongcong', label: 'GitHub', icon: FaGithub },
     {
-      href: 'https://twitter.com/hongming731',
+      href: 'https://x.com/Snipercccc',
       label: 'Twitter',
       icon: FaTwitter,
     },
