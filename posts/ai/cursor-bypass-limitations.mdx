@@ -1,0 +1,35 @@
+---
+title: Cursor绕过适用限制
+date: 2024-01-10
+category: ai
+tags: Cursor, AI, 开发工具
+description: 探讨Cursor AI编码助手的使用限制以及如何合理绕过这些限制，提高开发效率
+cover: https://raw.githubusercontent.com/macong0420/Image/main/202501241420134.png
+---
+
+### 手动重置
+
+1. 完全关闭Cursor
+2. 找到storage.json文件：
+    - Windows: `%APPDATA%\Roaming\Cursor\User\globalStorage\storage.json`
+    - MacOS: `~/Library/Application Support/Cursor/User/globalStorage/storage.json`
+    - Linux: `~/.config/Cursor/User/globalStorage/storage.json`
+3. 修改文件为可写（如果需要）：
+    - Windows: 右键 -> 属性 -> 取消勾选"只读"
+    - MacOS/Linux: `chmod 666 storage.json`
+4. 编辑文件，替换以下字段为新的随机值：
+    
+    ```
+    {
+      "telemetry.macMachineId": "生成64位十六进制",
+      "telemetry.machineId": "生成64位十六进制",
+      "telemetry.devDeviceId": "生成UUID格式"
+    }
+    ```
+    
+    - 十六进制值：使用64个字符(0-9, a-f)
+    - UUID格式：类似 "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+5. 将文件设为只读：
+    - Windows: 右键 -> 属性 -> 勾选"只读"
+    - MacOS/Linux: `chmod 444 storage.json`
+6. 重启Cursor
