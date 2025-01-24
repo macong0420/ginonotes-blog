@@ -48,7 +48,7 @@ export function Hero() {
 
                 {/* 技能标签 */}
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
-                    {['Java', 'Spring', 'MongoDB', 'Next.js', 'Tailwind CSS', 'LLM', 'Workflow', 'Agent'].map((skill) => (
+                    {['iOS', 'Flutter', 'LLM', 'WorkFlow', 'Agent'].map((skill) => (
                         <motion.span
                             key={skill}
                             initial={{ opacity: 0, scale: 0.8 }}
@@ -63,4 +63,4 @@ export function Hero() {
             </motion.div>
         </section>
     )
-} 
+}

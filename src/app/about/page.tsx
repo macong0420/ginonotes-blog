@@ -175,26 +175,6 @@ export default function About() {
                         ))}
                     </div>
                 </div>
-
-                {/* 订阅提示 */}
-                <div className="mt-16">
-                    <div className="rounded-2xl bg-blue-50 p-6 dark:bg-blue-900/20">
-                        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                            📬 免费订阅我的 AI 周刊
-                        </h3>
-                        <p className="mt-2 text-blue-800 dark:text-blue-200">
-                            每周精选高质量的 AI 文章，帮助你跟上人工智能的最新发展。已有超过 2000 位读者订阅，欢迎加入我们！
-                        </p>
-                        <a
-                            href="https://www.bestblogs.dev/#subscribe"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-                        >
-                            立即订阅
-                        </a>
-                    </div>
-                </div>
             </div>
         </Container>
     )
