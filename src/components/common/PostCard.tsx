@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { BlurImage } from './BlurImage'
 import { calculateReadingTime } from '@/lib/utils'
-import { getCategoryName, CATEGORY_MAP } from '@/lib/images'
+import { getCategoryName, CATEGORY_MAP, DEFAULT_COVERS, getRandomCover } from '@/lib/images'
 
 interface PostCardProps extends Post {
     priority?: boolean
@@ -30,7 +30,7 @@ export function PostCard({ priority = false, ...post }: PostCardProps) {
                     {/* 封面图 */}
                     <div className="aspect-[2/1] overflow-hidden rounded-xl">
                         <BlurImage
-                            src={post.cover}
+                            src={post.cover || getRandomCover(post.category as keyof typeof DEFAULT_COVERS)}
                             alt={post.title}
                             width={600}
                             height={300}
