@@ -8,7 +8,7 @@ import { BsRobot, BsGear } from 'react-icons/bs'
 import { Container } from '@/components/common/Container'
 
 const meta = {
-    title: '关于我 - Just be funny',
+    title: '关于我 - 新晋奶爸',
     description: '开发工程师，AI 爱好者，篮球迷，终身学习者。每周发送 AI 精选文章，欢迎订阅！',
     url: `${WEBSITE_HOST_URL}/about`,
 }
@@ -96,14 +96,10 @@ export default function About() {
                 {/* 头部介绍 */}
                 <div>
                     <h1 className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
-                        Just be funny~
+                        新晋奶爸~
                     </h1>
                     <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
-                        👋 你好！我是一名客户端开发工程师，负责架构设计和核心功能开发。主要从事 iOS、Flutter 和前端开发工作，热衷于探索新技术，追求代码质量和用户体验的完美统一。在空闲时间，我会研究人工智能和 Web3 项目，同时运营着
-                        <a href="https://bestblogs.dev" target="_blank" rel="noopener noreferrer" className="px-1 text-blue-500 hover:text-blue-600">
-                            bestblogs.dev
-                        </a>
-                        ，每周发送 AI 精选文章，目前已有超过 2000 位订阅者。我相信技术不仅仅是工具，更是创造价值和改变世界的力量。
+                        👋 你好！我是一名客户端开发工程师，负责架构设计和核心功能开发。主要从事 iOS、Flutter 和前端开发工作，热衷于探索新技术，追求代码质量和用户体验的完美统一。
                     </p>
                 </div>
 
