@@ -1,8 +1,8 @@
 import { WEBSITE_HOST_URL } from '@/lib/constants'
 import type { Metadata } from 'next'
-import { FaBasketballBall, FaBook, FaRobot, FaJava, FaGithub, FaTwitter, FaWeixin } from 'react-icons/fa'
-import { SiSpring, SiNextdotjs, SiMongodb } from 'react-icons/si'
-import { GiPokerHand } from 'react-icons/gi'
+import { FaBasketballBall, FaBook, FaRobot, FaJava, FaGithub, FaTwitter } from 'react-icons/fa'
+import { SiSpring, SiNextdotjs, SiMongodb, SiSwift, SiFlutter, SiReact } from 'react-icons/si'
+import { GiChessKing } from 'react-icons/gi'
 import { HiMail } from 'react-icons/hi'
 import { BsRobot, BsGear } from 'react-icons/bs'
 import { Container } from '@/components/common/Container'
@@ -34,12 +34,11 @@ export const metadata: Metadata = {
 }
 
 const skills = [
-    { icon: FaJava, name: 'Java', color: 'text-red-500' },
-    { icon: SiSpring, name: 'Spring', color: 'text-green-500' },
-    { icon: SiMongodb, name: 'MongoDB', color: 'text-green-600' },
+    { icon: SiSwift, name: 'iOS', color: 'text-orange-500' },
+    { icon: SiFlutter, name: 'Flutter', color: 'text-blue-500' },
+    { icon: SiReact, name: 'React', color: 'text-blue-400' },
     { icon: SiNextdotjs, name: 'Next.js', color: 'text-gray-800 dark:text-gray-200' },
     { icon: BsRobot, name: 'RAG', color: 'text-purple-500' },
-    { icon: BsGear, name: 'Workflow', color: 'text-blue-500' },
     { icon: FaRobot, name: 'Agent', color: 'text-emerald-500' },
 ]
 
@@ -50,9 +49,9 @@ const interests = [
         description: '热爱篮球运动，享受团队协作的乐趣'
     },
     {
-        icon: GiPokerHand,
-        title: '德州扑克',
-        description: '享受策略思考和决策的乐趣'
+        icon: GiChessKing,
+        title: '中国象棋',
+        description: '享受博弈的乐趣，提升思维能力'
     },
     {
         icon: FaBook,
@@ -68,30 +67,24 @@ const interests = [
 
 const contacts = [
     {
-        icon: FaWeixin,
-        name: '微信',
-        value: 'xingxing174556571',
-        color: 'text-green-500',
-    },
-    {
         icon: FaGithub,
         name: 'GitHub',
-        value: 'ginobefun',
-        link: 'https://github.com/ginobefun',
+        value: 'macong0420',
+        link: 'https://github.com/macong0420',
         color: 'text-gray-800 dark:text-gray-200',
     },
     {
         icon: FaTwitter,
         name: 'Twitter',
-        value: '@hongming731',
-        link: 'https://twitter.com/hongming731',
+        value: '@Snipercccc',
+        link: 'https://x.com/Snipercccc',
         color: 'text-blue-400',
     },
     {
         icon: HiMail,
         name: '邮件',
-        value: 'hi@gino.bot',
-        link: 'mailto:hi@gino.bot',
+        value: 'macong0420@gmail.com',
+        link: 'mailto:macong0420@gmail.com',
         color: 'text-red-500',
     },
 ]
@@ -106,7 +99,7 @@ export default function About() {
                         Just be funny~
                     </h1>
                     <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
-                        👋 你好！我是一名开发工程师，负责架构设计和核心功能开发。在空闲时间，我会研究人工智能和 Web3 项目，同时运营着
+                        👋 你好！我是一名客户端开发工程师，负责架构设计和核心功能开发。主要从事 iOS、Flutter 和前端开发工作，热衷于探索新技术，追求代码质量和用户体验的完美统一。在空闲时间，我会研究人工智能和 Web3 项目，同时运营着
                         <a href="https://bestblogs.dev" target="_blank" rel="noopener noreferrer" className="px-1 text-blue-500 hover:text-blue-600">
                             bestblogs.dev
                         </a>
@@ -118,7 +111,7 @@ export default function About() {
                 <div className="mt-16">
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">技术栈</h2>
                     <p className="mt-4 text-gray-600 dark:text-gray-400">
-                        我专注于构建高性能、高并发、高稳定性的系统。同时具备全栈开发能力，能够独立完成项目开发。
+                        我的技术栈包含 iOS、Flutter 和前端开发，能够独立完成移动端和 Web 端的项目开发。
                     </p>
                     <div className="mt-8 flex flex-wrap gap-6">
                         {skills.map((skill) => (

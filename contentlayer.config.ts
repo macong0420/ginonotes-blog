@@ -7,31 +7,21 @@ import { PostRoute, createPostRoute } from './src/lib/routes'
 
 export const Post = defineDocumentType(() => ({
   name: 'Post',
-  filePathPattern: '**/*.mdx',
+  filePathPattern: `**/*.mdx`,
   contentType: 'mdx',
   fields: {
     title: { type: 'string', required: true },
-    date: { type: 'string', required: true },
-    description: { type: 'string' },
+    date: { type: 'date', required: true },
     category: { type: 'string', required: true },
-    tags: { type: 'string' },
-    cover: { type: 'string' },
-    slug: { type: 'string' },
+    description: { type: 'string', required: true },
+    tags: { type: 'string', required: false },
+    cover: { type: 'string', required: false },
+    slug: { type: 'string', required: false },
   },
   computedFields: {
     url: {
       type: 'string',
-      resolve: (post): PostRoute => {
-        const slug = (post.slug || post._raw.flattenedPath).replace(/_/g, '-')
-        return createPostRoute(slug)
-      },
-    },
-    categoryPath: {
-      type: 'string',
-      resolve: (post) => {
-        const pathParts = post._raw.flattenedPath.split('/')
-        return pathParts[0]
-      },
+      resolve: (post) => `/posts/${post._raw.flattenedPath}`,
     },
   },
 }))

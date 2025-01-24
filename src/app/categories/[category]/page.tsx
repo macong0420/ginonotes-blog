@@ -22,8 +22,9 @@ export default function CategoryPage({ params, searchParams }: CategoryPageProps
     notFound()
   }
 
-  // 获取当前分类的所有文章
-  const categoryPosts = allPosts
+  // 获取当前分类的所有文章，添加空数组判断
+  const posts = allPosts || []
+  const categoryPosts = posts
     .filter((post) => post.category === params.category)
     .sort((a, b) => compareDesc(new Date(a.date), new Date(b.date)))
 
