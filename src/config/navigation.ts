@@ -59,6 +59,8 @@ export const navigation: NavigationConfig = {
   ],
   projects: [
     { href: 'https://shuiyin.yc0501.online/', label: '图片水印', icon: FaCode },
+    { href: 'https://openalternative.co/', label: '开源替代', icon: FaCode },
+    
   ],
   online: [
     { href: 'https://github.com/macongcong', label: 'GitHub', icon: FaGithub },
