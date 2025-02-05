@@ -38,12 +38,7 @@ export const navigation: NavigationConfig = {
       icon: FaBrain,
       count: getCategoryCount('ai'),
     },
-    {
-      href: createCategoryRoute('build'),
-      label: '构建之路',
-      icon: FaRocket,
-      count: getCategoryCount('build'),
-    },
+
     {
       href: createCategoryRoute('reading'),
       label: '阅读记录',
