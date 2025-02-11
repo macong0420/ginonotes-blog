@@ -1,0 +1,32 @@
+---
+title: Cursor 暂时复活
+date: 2024-02-011
+category: ai
+tags: Cursor, AI, 开发工具
+description: 探讨 Cursor AI 编码助手的最新状态和使用方法，分享如何继续使用这个强大的 AI 开发工具
+cover: https://raw.githubusercontent.com/macong0420/Image/main/202502111551958.png
+---
+
+本文技术方案基于https://github.com/yuaotian/go-cursor-help/issues 这个开源项目
+
+# 修复问题
+ 主要修复了 “Too many free trial accounts used on this machine.
+Please upgrade to pro. We have this limit in place
+to prevent abuse. Please let us know if you believe
+this is a mistake.” 太多试用记录的问题
+
+# 方案
+ ## 禁用自动更新功能
+ 为防止 Cursor 自动更新到不支持的新版本，您可以选择禁用自动更新功能。
+ # 一键禁用 推荐
+ 终端执行:
+ ```
+ curl -fsSL https://aizaozao.com/accelerate.php/https://raw.githubusercontent.com/yuaotian/go-cursor-help/refs/heads/master/scripts/run/cursor_mac_id_modifier.sh | sudo bash
+ ```
+
+ # mac 重新生成试用激活 指令
+  终端执行:
+  ```
+  curl -fsSL https://raw.githubusercontent.com/yuaotian/go-cursor-help/master/scripts/install.sh | sudo bash
+
+  ```
