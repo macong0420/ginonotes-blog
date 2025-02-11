@@ -1,0 +1,135 @@
+---
+title: 移动端特定页面弹窗架构设计
+date: 2024-02-11
+category: dev
+tags: iOS, 移动端, 开发
+description: 在iOS应用开发中，导航栏的translucent属性是一个容易被忽视但影响深远的关键参数。它直接决定了导航栏的视觉效果、布局逻辑以及与用户界面的交互方式。本文将结合不同iOS版本特性，深入剖析translucent属性的工作原理及最佳实践。
+cover: https://raw.githubusercontent.com/macong0420/Image/main/202502111617700.png
+---
+
+## **通用弹窗技术方案（iOS 使用 Runtime Hook 方式）**
+
+### **1. 背景**
+在移动端 App（iOS、Android 及部分 Flutter 页面）中，需要实现一个通用弹窗功能。后端提供弹窗的页面配置，包含页面名称、页面路由及相关参数。App 需要在运行过程中根据当前打开的页面匹配后端配置，并拉取弹窗数据进行展示。
+
+iOS 端不使用基类，而是采用 **Runtime Hook** 技术，在 `viewWillAppear` 方法中拦截页面生命周期，进行弹窗匹配和展示。
+
+---
+
+### **2. 需求分析**
+1. **后端数据结构**
+   - 采用 JSON 数组存储弹窗配置，每个对象包含：
+     - `pageName`（页面名称）
+     - `route`（页面路由）
+     - `params`（额外参数，如弹窗类型、显示条件等）
+   - 该数据在 App 启动时获取，并缓存在本地（`UserDefaults`）。
+  
+2. **触发逻辑**
+   - **iOS：** 使用 **Method Swizzling** Hook `UIViewController` 的 `viewWillAppear`，无需修改业务代码，在页面显示时进行弹窗匹配。
+   - **Android：** 采用 `LifecycleObserver` 监听 `onResume`。
+   - **Flutter：** 采用 `NavigatorObserver` 监听 `push` 事件。
+
+---
+
+### **3. 方案设计**
+
+#### **3.1 iOS: Runtime Hook 方案（Objective-C）**
+```objc
+#import <objc/runtime.h>
+#import <UIKit/UIKit.h>
+#import "PopupManager.h"
+
+@implementation UIViewController (PopupHook)
+
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class class = [self class];
+
+        SEL originalSelector = @selector(viewWillAppear:);
+        SEL swizzledSelector = @selector(popup_viewWillAppear:);
+
+        Method originalMethod = class_getInstanceMethod(class, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
+
+        BOOL didAddMethod = class_addMethod(class,
+                                            originalSelector,
+                                            method_getImplementation(swizzledMethod),
+                                            method_getTypeEncoding(swizzledMethod));
+
+        if (didAddMethod) {
+            class_replaceMethod(class,
+                                swizzledSelector,
+                                method_getImplementation(originalMethod),
+                                method_getTypeEncoding(originalMethod));
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod);
+        }
+    });
+}
+
+- (void)popup_viewWillAppear:(BOOL)animated {
+    [self popup_viewWillAppear:animated]; // 调用原始 viewWillAppear
+
+    // 获取当前控制器的名称
+    NSString *currentRoute = NSStringFromClass([self class]);
+
+    // 检查是否命中弹窗配置
+    NSDictionary *popupConfig = [[PopupManager sharedManager] getPopupConfigForRoute:currentRoute];
+    if (popupConfig) {
+        [[PopupManager sharedManager] showPopupWithConfig:popupConfig onViewController:self];
+    }
+}
+
+@end
+```
+
+---
+
+#### **3.2 iOS: 弹窗管理类**
+```objc
+#import "PopupManager.h"
+
+@implementation PopupManager
+
++ (instancetype)sharedManager {
+    static PopupManager *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[PopupManager alloc] init];
+    });
+    return instance;
+}
+
+- (NSDictionary *)getPopupConfigForRoute:(NSString *)route {
+    NSArray *popupConfigs = [[NSUserDefaults standardUserDefaults] objectForKey:@"PopupConfigs"];
+    for (NSDictionary *config in popupConfigs) {
+        if ([config[@"route"] isEqualToString:route]) {
+            return config;
+        }
+    }
+    return nil;
+}
+
+- (void)showPopupWithConfig:(NSDictionary *)config onViewController:(UIViewController *)vc {
+    NSString *title = config[@"params"][@"title"] ?: @"提示";
+    NSString *message = config[@"params"][@"content"] ?: @"";
+
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定"
+                                                       style:UIAlertActionStyleDefault
+                                                     handler:nil];
+    [alert addAction:okAction];
+
+    [vc presentViewController:alert animated:YES completion:nil];
+}
+
+@end
+```
+
+---
+
+### **4. 方案总结**
+此方案确保了**无侵入性**、**跨平台统一性** 和 **高扩展性**，能够满足 App 运行过程中的通用弹窗需求。
