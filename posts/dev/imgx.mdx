@@ -1,0 +1,38 @@
+---
+title: 一行URL生成封面图
+date: 2024-02-10
+category: dev
+tags: UI, 移动端, 设计
+description: 来自于开源项目.一行URL生成封面图
+cover: https://raw.githubusercontent.com/macong0420/Image/main/202502112005805.png
+---
+
+一、核心机制解析
+
+### 项目地址:https://github.com/aatrooox/imgx
+
+#### 背景
+有时候写文章时需要上传封面图，大部分情况我只需要简单的文字、LOGO、强调文字等即可。
+
+现有的App、Web端需要我打开他们的平台，然后选择合适的模板，最后还要充个会员，不然就限制我下载图片的大小，给我加个水印什么的。
+
+此 API 可以帮助我快速在任意场景下拿到一张想要的图片。
+
+并且如果是文章中配图，大部分技术平台都支持自动转存，很省心。
+
+#### 使用
+如： https://imgx.zzao.club/api/img/001/001/[Nuxt实战]从入门到放弃系列+点击就送屠龙宝刀?bgColor=292a3a-536976&accentColor=0088a9&color=ffffff
+
+
+
+
+
+#### 功能
+ 简单的文字生成图片
+ 支持换行
+ 支持强调色 [强调的内容]
+ 支持背景色 query.bgColor （两个颜色的渐变色支持-分割）
+ 支持文字颜色 query.color
+ 支持居中或左对齐 query.center === 1 ?
+ 支持多种比例的图片大小
+
