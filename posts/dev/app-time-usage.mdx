@@ -1,0 +1,374 @@
+---
+title: iOS原生应用使用时间统计
+date: 2024-02-10
+category: dev
+tags: UI, 移动端, iOS
+description: 告别“黑盒”：App使用时长统计的进阶之路
+cover: https://raw.githubusercontent.com/macong0420/Image/main/202503181512618.png
+---
+## 告别“黑盒”：App使用时长统计的进阶之路
+各位开发者，你是否曾感到App如同一个黑盒，用户在里面做什么，用了多久，一概不知？ 掌握用户行为，才能更好地打磨产品，提升用户体验。 今天，我们就来深入探讨App使用时长统计，告别“黑盒”，走向数据驱动的开发之路。
+### 需求分析：不仅仅是“时长”
+在开始之前，让我们重新审视一下需求。App使用时长统计，不仅仅是简单地记录用户停留的时间，更重要的是：
+1.  **高精度统计：** 尽可能精确地记录用户在App上花费的时间，误差越小越好。
+2.  **容错性：** 必须考虑到各种异常情况，例如App崩溃（Crash）、被用户强制关闭（Kill）、系统资源不足等，确保数据尽可能完整。
+3.  **低侵入性：** 统计过程不能影响App的性能和用户体验，避免过度消耗电量和CPU资源。
+4.  **可扩展性：** 代码要易于维护和扩展，方便以后添加新的统计维度和功能，例如：
+    *   不同页面的使用时长
+    *   不同功能模块的使用频率
+    *   用户行为路径分析
+5.  **实时性：** 能够及时上报统计数据，方便进行实时分析和监控。
+### 技术选型：多管齐下，各司其职
+为了满足上述需求，我们需要选择合适的技术方案，让它们各司其职，协同工作：
+*   **GCD定时器：** 用于定时保存临时使用时长，在App发生意外情况时，尽可能保留数据。
+*   **NSUserDefaults (或 SQLite)：** 用于本地存储临时数据，选择合适的存储方案取决于数据量和复杂程度。
+*   **单例模式：** 保证在App生命周期内只有一个统计管理器实例，避免数据冲突和混乱。
+*   **Crash Reporting SDK (例如 Firebase Crashlytics)：** 用于检测App是否发生Crash，为异常退出处理提供依据。
+*   **后台任务 (Background Tasks)：** 确保在App进入后台后，有足够的时间完成数据保存和上报。
+*   **线程锁 (NSLock)：** 保证多线程访问共享资源时的线程安全。
+### 代码实现：步步为营，精益求精
+接下来，让我们一步步地实现代码，深入理解每个技术点的细节。
+**1. 单例模式：保证全局唯一**
+单例模式是一种常用的设计模式，它可以保证一个类只有一个实例，并提供一个全局访问点。在我们的场景中，使用单例模式可以确保只有一个统计管理器实例，避免数据混乱。
+```objectivec
++ (instancetype)sharedInstance {
+    static DWUsageTimeManager *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+思考： 为什么需要使用 dispatch_once 来保证线程安全？
+
+2. 生命周期监听：掌控App状态
+
+我们需要监听App的生命周期事件，在App进入前台时开始计时，进入后台时停止计时并上报数据。
+
+<OBJECTIVEC>
+- (void)setupNotifications {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidBecomeActive:)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidEnterBackground:)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationWillTerminate:)
+                                                 name:UIApplicationWillTerminateNotification
+                                               object:nil];
+}
+思考： 除了 UIApplicationDidBecomeActiveNotification 和 UIApplicationDidEnterBackgroundNotification，还有哪些生命周期事件值得关注？
+
+3. GCD定时器：定时保存，亡羊补牢
+
+为了防止App发生意外情况导致数据丢失，我们需要定期保存临时使用时长。GCD定时器是一个不错的选择，它可以在后台线程执行定时任务，不会阻塞主线程。
+
+<OBJECTIVEC>
+- (void)startGCDTimer {
+    [self stopGCDTimer];
+
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    self.dispatchTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+
+    uint64_t interval = kDWSaveTimeInterval * NSEC_PER_SEC;
+    dispatch_source_set_timer(self.dispatchTimer,
+                             dispatch_time(DISPATCH_TIME_NOW, interval),
+                             interval,
+                             1 * NSEC_PER_SEC); // 1秒的误差允许
+
+    __weak typeof(self) weakSelf = self;
+    dispatch_source_set_event_handler(self.dispatchTimer, ^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf saveTempDuration];
+        }
+    });
+
+    dispatch_resume(self.dispatchTimer);
+}
+思考： 定时器的时间间隔如何选择？太短会增加电量消耗，太长则可能导致数据丢失。
+
+4. 本地存储：数据持久化
+
+我们需要将临时使用时长保存到本地存储，以便在App下次启动时恢复。NSUserDefaults 是一个简单易用的选择，但如果数据量较大，可以考虑使用 SQLite 数据库。
+
+<OBJECTIVEC>
+- (void)saveTempDuration {
+    [self.lock lock];
+
+    if (self.startTime) {
+        NSTimeInterval tempDuration = [[NSDate date] timeIntervalSinceDate:self.startTime] * 1000;
+
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setDouble:tempDuration forKey:kDWUsageTimeTempDurationKey];
+        [defaults synchronize];
+
+        NSLog(@"DWUsageTimeManager: 保存临时使用时长: %.2f 毫秒", tempDuration);
+    }
+
+    [self.lock unlock];
+}
+思考： 除了 NSUserDefaults 和 SQLite，还有哪些本地存储方案可供选择？它们的优缺点分别是什么？
+
+5. 异常退出处理：亡羊补牢，犹未晚也
+
+当App发生Crash或被Kill时，我们无法正常停止计时并上报数据。因此，我们需要在App启动时检查是否有未上报的临时数据，如果有，则立即上报。
+
+<OBJECTIVEC>
+- (void)checkForAbnormalExit {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    double tempDuration = [defaults doubleForKey:kDWUsageTimeTempDurationKey];
+
+    if (tempDuration > 0) {
+        NSLog(@"DWUsageTimeManager: 检测到异常退出，上报临时使用时长: %.2f 毫秒", tempDuration);
+        [self reportUsageTime:tempDuration];
+    }
+    [self clearTempDuration];
+}
+思考： 除了检查 tempDuration 是否存在，还可以通过哪些方式来判断App是否为异常退出？
+
+6. 线程安全：避免数据竞争
+
+在多线程环境下，我们需要保证对共享资源的访问是线程安全的，避免数据竞争。NSLock 是一个简单的互斥锁，可以用来保护共享资源。
+
+<OBJECTIVEC>
+@property (nonatomic, strong) NSLock *lock; // 线程锁
+
+- (void)startTracking {
+    [self.lock lock]; // 加锁
+    // ...
+    [self.lock unlock]; // 解锁
+}
+思考： 除了 NSLock，还有哪些线程同步机制可供选择？它们的适用场景分别是什么？
+
+7. 后台任务：争取更多时间
+
+当App进入后台时，系统会限制App的执行时间。为了确保数据能够成功保存和上报，我们可以使用后台任务来请求更多的时间。
+
+<OBJECTIVEC>
+- (void)applicationDidEnterBackground:(NSNotification *)notification {
+    UIApplication *application = [UIApplication sharedApplication];
+    __block UIBackgroundTaskIdentifier bgTask = [application beginBackgroundTaskWithExpirationHandler:^{
+        [application endBackgroundTask:bgTask];
+        bgTask = UIBackgroundTaskInvalid;
+    }];
+
+    [self stopTracking];
+
+    [application endBackgroundTask:bgTask];
+    bgTask = UIBackgroundTaskInvalid;
+}
+思考： 后台任务的执行时间是有限制的，如何充分利用这段时间？
+
+### 更进一步：持续优化，追求卓越
+以上代码只是一个基础框架，在实际应用中，我们还需要不断优化和改进：
+
+更精确的时间： 使用 mach_absolute_time() 获取更精确的时间，避免因系统时间调整导致统计误差。
+数据加密： 对本地存储的临时数据进行加密，保护用户隐私。
+埋点接口封装： 将埋点接口调用封装成一个独立的模块，方便切换不同的埋点服务。
+Crash监控： 集成Crash监控SDK，例如 Firebase Crashlytics，更准确地判断崩溃情况，并上报崩溃信息。
+数据压缩： 对上报的数据进行压缩，减少网络传输量，提高上报速度。
+离线缓存： 如果网络连接不稳定，可以将数据缓存到本地，稍后重试。
+用户行为分析： 结合用户行为分析，可以更深入地了解用户的使用习惯和偏好，为产品优化提供更有效的依据。
+总结：数据驱动，精益求精
+App使用时长统计是一个看似简单，实则充满挑战的任务。我们需要综合运用各种技术手段，才能尽可能准确地记录用户行为，为产品优化提供数据支持。
+
+##希望这篇文章能够帮助你更好地理解App使用时长统计的原理和实现方法。记住，数据驱动，精益求精，才能打造出卓越的产品！
+
+完整代码：
+<OBJECTIVEC>
+#import "DWUsageTimeManager.h"
+
+static NSString * const kDWUsageTimeTempDurationKey = @"kDWUsageTimeTempDurationKey";
+static NSString * const kDWUsageTimeStartTimeKey = @"kDWUsageTimeStartTimeKey";
+static const NSTimeInterval kDWSaveTimeInterval = 300.0;
+
+@interface DWUsageTimeManager ()
+
+@property (nonatomic, strong) NSDate *startTime;
+@property (nonatomic, strong) dispatch_source_t dispatchTimer;
+@property (nonatomic, strong) NSLock *lock;
+
+@end
+
+@implementation DWUsageTimeManager
+
+#pragma mark - 单例实现
++ (instancetype)sharedInstance {
+    static DWUsageTimeManager *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _lock = [[NSLock alloc] init];
+        [self setupNotifications];
+        [self checkForAbnormalExit];
+    }
+    return self;
+}
+
+#pragma mark - 公共方法
+- (void)startTracking {
+    [self.lock lock];
+    self.startTime = [NSDate date];
+    [[NSUserDefaults standardUserDefaults] setDouble:[self.startTime timeIntervalSince1970] * 1000 forKey:kDWUsageTimeStartTimeKey];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    [self startGCDTimer];
+    [self.lock unlock];
+
+    NSLog(@"DWUsageTimeManager: 开始记录使用时长");
+}
+
+- (void)stopTracking {
+    [self.lock lock];
+    [self stopGCDTimer];
+
+    if (self.startTime) {
+        NSTimeInterval duration = [[NSDate date] timeIntervalSinceDate:self.startTime] * 1000; // 转换为毫秒
+        [self reportUsageTime:duration];
+        self.startTime = nil;
+
+        [self clearTempDuration];
+    }
+    [self.lock unlock];
+
+    NSLog(@"DWUsageTimeManager: 停止记录使用时长");
+}
+
+#pragma mark - 私有方法
+- (void)setupNotifications {
+    // 监听应用进入前台通知
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidBecomeActive:)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
+
+    // 监听应用进入后台通知
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidEnterBackground:)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+
+    // 监听应用将要终止通知
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationWillTerminate:)
+                                                 name:UIApplicationWillTerminateNotification
+                                               object:nil];
+}
+
+- (void)checkForAbnormalExit {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    double tempDuration = [defaults doubleForKey:kDWUsageTimeTempDurationKey];
+
+    if (tempDuration > 0) {
+        NSLog(@"DWUsageTimeManager: 检测到异常退出，上报临时使用时长: %.2f 毫秒", tempDuration);
+        [self reportUsageTime:tempDuration];
+    }
+    [self clearTempDuration];
+}
+
+#pragma mark - GCD
+- (void)startGCDTimer {
+    [self stopGCDTimer];
+
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    self.dispatchTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+
+    uint64_t interval = kDWSaveTimeInterval * NSEC_PER_SEC;
+    dispatch_source_set_timer(self.dispatchTimer,
+                             dispatch_time(DISPATCH_TIME_NOW, interval),
+                             interval,
+                             1 * NSEC_PER_SEC); // 1秒的误差允许
+
+    __weak typeof(self) weakSelf = self;
+    dispatch_source_set_event_handler(self.dispatchTimer, ^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf saveTempDuration];
+        }
+    });
+
+    dispatch_resume(self.dispatchTimer);
+}
+
+- (void)stopGCDTimer {
+    if (self.dispatchTimer) {
+        dispatch_source_cancel(self.dispatchTimer);
+        self.dispatchTimer = nil;
+    }
+}
+
+- (void)saveTempDuration {
+    [self.lock lock];
+
+    if (self.startTime) {
+        NSTimeInterval tempDuration = [[NSDate date] timeIntervalSinceDate:self.startTime] * 1000;
+
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setDouble:tempDuration forKey:kDWUsageTimeTempDurationKey];
+        [defaults synchronize];
+
+        NSLog(@"DWUsageTimeManager: 保存临时使用时长: %.2f 毫秒", tempDuration);
+    }
+
+    [self.lock unlock];
+}
+
+- (void)clearTempDuration {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    if ([defaults objectForKey:kDWUsageTimeTempDurationKey]) {
+        [defaults removeObjectForKey:kDWUsageTimeTempDurationKey];
+        NSLog(@"DWUsageTimeManager: 清除临时使用时长数据");
+    }
+
+    [defaults synchronize];
+}
+
+- (void)reportUsageTime:(NSTimeInterval)duration {
+    NSLog(@"DWUsageTimeManager: 上报使用时长: %.2f 毫秒", duration);
+
+    @try {
+        // 实际项目中应替换为真实的埋点接口调用
+        // [DWTracker trackEventWithName:@"app_usage_time" params:@{@"duration": @(duration)}];
+    } @catch (NSException *exception) {
+        NSLog(@"DWUsageTimeManager: 上报使用时长失败, 错误: %@", exception);
+        // 处理失败情况，例如保存到本地，下次启动时重试
+    }
+}
+
+#pragma mark - 应用生命周期通知处理
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    [self startTracking];
+}
+
+- (void)applicationDidEnterBackground:(NSNotification *)notification {
+    UIApplication *application = [UIApplication sharedApplication];
+    __block UIBackgroundTaskIdentifier bgTask = [application beginBackgroundTaskWithExpirationHandler:^{
+        [application endBackgroundTask:bgTask];
+        bgTask = UIBackgroundTaskInvalid;
+    }];
+
+    [self stopTracking];
+
+    [application endBackgroundTask:bgTask];
+    bgTask = UIBackgroundTaskInvalid;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [self stopGCDTimer];
+}
+
+@end
